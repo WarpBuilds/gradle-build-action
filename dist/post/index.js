@@ -2362,6 +2362,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
         }
         const compressionMethod = yield utils.getCompressionMethod();
         let archivePath = '';
+        let archiveFileSize = 0
         try {
             // path are needed to compute version
             const cacheEntry = yield cacheHttpClient.getCacheEntry(primaryKey, restoreKeys, paths, {
@@ -2395,7 +2396,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
                     if (core.isDebug()) {
                         yield (0, tar_1.listTar)(archivePath, compressionMethod);
                     }
-                    const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+                    archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
                     core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
                     yield (0, tar_1.extractTar)(archivePath, compressionMethod);
                     core.info('Cache restored successfully');
@@ -2451,7 +2452,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
                         if (core.isDebug()) {
                             yield (0, tar_1.listTar)(archivePath, compressionMethod);
                         }
-                        const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+                        archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
                         core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
                         yield (0, tar_1.extractTar)(archivePath, compressionMethod);
                     }

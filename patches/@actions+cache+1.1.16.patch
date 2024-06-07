@@ -28,10 +28,18 @@ index 29aabbd..54ce098 100644
   * Deletes an entire cache by cache key.
   * @param key The cache keys
 diff --git a/node_modules/@actions/cache/lib/cache.js b/node_modules/@actions/cache/lib/cache.js
-index 588aae4..e1ee875 100644
+index 588aae4..a9de17a 100644
 --- a/node_modules/@actions/cache/lib/cache.js
 +++ b/node_modules/@actions/cache/lib/cache.js
-@@ -128,7 +128,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+@@ -107,6 +107,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+         }
+         const compressionMethod = yield utils.getCompressionMethod();
+         let archivePath = '';
++        let archiveFileSize = 0
+         try {
+             // path are needed to compute version
+             const cacheEntry = yield cacheHttpClient.getCacheEntry(primaryKey, restoreKeys, paths, {
+@@ -128,7 +129,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
                      }
                      if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
                          core.info('Lookup only - skipping download');
@@ -40,7 +48,16 @@ index 588aae4..e1ee875 100644
                      }
                      try {
                          yield cacheHttpClient.downloadCache(cacheEntry.provider, (_d = cacheEntry.s3) === null || _d === void 0 ? void 0 : _d.pre_signed_url, archivePath);
-@@ -152,7 +152,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+@@ -140,7 +141,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+                     if (core.isDebug()) {
+                         yield (0, tar_1.listTar)(archivePath, compressionMethod);
+                     }
+-                    const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
++                    archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+                     core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+                     yield (0, tar_1.extractTar)(archivePath, compressionMethod);
+                     core.info('Cache restored successfully');
+@@ -152,7 +153,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
                      }
                      if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
                          core.info('Lookup only - skipping download');
@@ -49,7 +66,16 @@ index 588aae4..e1ee875 100644
                      }
                      const archiveLocation = `gs://${(_f = cacheEntry.gcs) === null || _f === void 0 ? void 0 : _f.bucket_name}/${(_g = cacheEntry.gcs) === null || _g === void 0 ? void 0 : _g.cache_key}`;
                      // For GCS, we do a streaming download which means that we extract the archive while we are downloading it.
-@@ -204,7 +204,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+@@ -196,7 +197,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+                         if (core.isDebug()) {
+                             yield (0, tar_1.listTar)(archivePath, compressionMethod);
+                         }
+-                        const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
++                        archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+                         core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+                         yield (0, tar_1.extractTar)(archivePath, compressionMethod);
+                     }
+@@ -204,7 +205,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
                      break;
                  }
              }
@@ -58,7 +84,7 @@ index 588aae4..e1ee875 100644
          }
          catch (error) {
              const typedError = error;
-@@ -315,10 +315,17 @@ function saveCache(paths, key, enableCrossOsArchive = false, enableCrossArchArch
+@@ -315,10 +316,17 @@ function saveCache(paths, key, enableCrossOsArchive = false, enableCrossArchArch
                  core.debug(`Failed to delete archive: ${error}`);
              }
          }
