@@ -1,0 +1,79 @@
+diff --git a/node_modules/@actions/cache/lib/cache.d.ts b/node_modules/@actions/cache/lib/cache.d.ts
+index 29aabbd..54ce098 100644
+--- a/node_modules/@actions/cache/lib/cache.d.ts
++++ b/node_modules/@actions/cache/lib/cache.d.ts
+@@ -22,7 +22,7 @@ export declare function isFeatureAvailable(): boolean;
+  * @param enableCrossArchArchive an optional boolean enabled to restore cache created on any arch
+  * @returns string returns the key for the cache hit, otherwise returns undefined
+  */
+-export declare function restoreCache(paths: string[], primaryKey: string, restoreKeys?: string[], options?: DownloadOptions, enableCrossOsArchive?: boolean, enableCrossArchArchive?: boolean): Promise<string | undefined>;
++export declare function restoreCache(paths: string[], primaryKey: string, restoreKeys?: string[], options?: DownloadOptions, enableCrossOsArchive?: boolean, enableCrossArchArchive?: boolean): Promise<CacheEntry | undefined>;
+ /**
+  * Saves a list of files with the specified key
+  *
+@@ -32,7 +32,14 @@ export declare function restoreCache(paths: string[], primaryKey: string, restor
+  * @param enableCrossArchArchive an optional boolean enabled to save cache on any arch which could be restored on any arch
+  * @returns string returns cacheId if the cache was saved successfully and throws an error if save fails
+  */
+-export declare function saveCache(paths: string[], key: string, enableCrossOsArchive?: boolean, enableCrossArchArchive?: boolean): Promise<string>;
++export declare function saveCache(paths: string[], key: string, enableCrossOsArchive?: boolean, enableCrossArchArchive?: boolean): Promise<CacheEntry>;
++
++export declare class CacheEntry {
++    key: string;
++    size?: number;
++    constructor(key: string, size?: number);
++}
++
+ /**
+  * Deletes an entire cache by cache key.
+  * @param key The cache keys
+diff --git a/node_modules/@actions/cache/lib/cache.js b/node_modules/@actions/cache/lib/cache.js
+index 588aae4..e1ee875 100644
+--- a/node_modules/@actions/cache/lib/cache.js
++++ b/node_modules/@actions/cache/lib/cache.js
+@@ -128,7 +128,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+                     }
+                     if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
+                         core.info('Lookup only - skipping download');
+-                        return cacheKey;
++                        return new CacheEntry(cacheKey, archiveFileSize);
+                     }
+                     try {
+                         yield cacheHttpClient.downloadCache(cacheEntry.provider, (_d = cacheEntry.s3) === null || _d === void 0 ? void 0 : _d.pre_signed_url, archivePath);
+@@ -152,7 +152,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+                     }
+                     if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
+                         core.info('Lookup only - skipping download');
+-                        return cacheKey;
++                        return new CacheEntry(cacheKey, archiveFileSize);
+                     }
+                     const archiveLocation = `gs://${(_f = cacheEntry.gcs) === null || _f === void 0 ? void 0 : _f.bucket_name}/${(_g = cacheEntry.gcs) === null || _g === void 0 ? void 0 : _g.cache_key}`;
+                     // For GCS, we do a streaming download which means that we extract the archive while we are downloading it.
+@@ -204,7 +204,7 @@ function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArch
+                     break;
+                 }
+             }
+-            return cacheKey;
++            return new CacheEntry(cacheKey, archiveFileSize);
+         }
+         catch (error) {
+             const typedError = error;
+@@ -315,10 +315,17 @@ function saveCache(paths, key, enableCrossOsArchive = false, enableCrossArchArch
+                 core.debug(`Failed to delete archive: ${error}`);
+             }
+         }
+-        return cacheKey;
++        return new CacheEntry(cacheKey, archiveFileSize);
+     });
+ }
+ exports.saveCache = saveCache;
++class CacheEntry {
++    constructor(key, size) {
++        this.key = key;
++        this.size = size;
++    }
++}
++exports.CacheEntry = CacheEntry;
+ /**
+  * Deletes an entire cache by cache key.
+  * @param key The cache keys
